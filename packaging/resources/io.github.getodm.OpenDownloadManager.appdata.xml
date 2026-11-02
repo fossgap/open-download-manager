@@ -29,6 +29,12 @@
   </screenshots>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.3.3" date="2026-11-02">
+      <description>
+        <p>Fixes Tor service startup when a previous session left it dormant.
+        Improves bootstrap diagnostics and startup waiting.</p>
+      </description>
+    </release>
     <release version="0.3.2" date="2026-10-29">
       <description>
         <p>Adds complete Simplified Chinese, Spanish, German, Portuguese and Japanese translations,
