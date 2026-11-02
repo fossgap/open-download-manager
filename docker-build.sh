@@ -141,6 +141,8 @@ dev() {
 }
 
 # Run the default suite without integration/E2E or performance tests
+# Use native Cairo rendering under Xvfb: its virtual OpenGL context can abort
+# during GTK snapshot tests. Interactive run/debug keep GTK's renderer default.
 test() {
     prepare_m2
     log "Running tests..."
@@ -149,6 +151,7 @@ test() {
         -v "$HOME/.m2:/home/developer/.m2" \
         -e PROXYCHAINS_AVAILABLE=true \
         -e ENABLE_NETWORK_TESTS=true \
+        -e GSK_RENDERER=cairo \
         $IMAGE_NAME \
         bash -c "$(worktree_write_guard)Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset > /dev/null 2>&1 & sleep 2 && mvn test"
 }
@@ -163,6 +166,7 @@ test_integration() {
         -v "$HOME/.m2:/home/developer/.m2" \
         -e PROXYCHAINS_AVAILABLE=true \
         -e ENABLE_NETWORK_TESTS=true \
+        -e GSK_RENDERER=cairo \
         $IMAGE_NAME \
         bash -c "$(worktree_write_guard)Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset > /dev/null 2>&1 & sleep 2 && mvn test -Pintegration"
 }
