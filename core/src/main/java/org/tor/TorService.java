@@ -181,7 +181,15 @@ public class TorService {
                             LOGGER.info("Tor service started successfully");
                             return true;
                         } else {
-                            LOGGER.error("Tor failed to start within timeout");
+                            if (!desiredRunning.get()) {
+                                LOGGER.info("Tor startup cancelled at {}% bootstrap", bootstrapProgress.get());
+                            } else if (!process.isAlive()) {
+                                LOGGER.error("Tor exited before bootstrap completed (exit code {}, bootstrap {}%)",
+                                        process.exitValue(), bootstrapProgress.get());
+                            } else {
+                                LOGGER.error("Tor failed to start within {} seconds (bootstrap {}%)",
+                                        DEFAULT_BOOTSTRAP_TIMEOUT_SECONDS, bootstrapProgress.get());
+                            }
                             stopInternal();
                             return false;
                         }
@@ -431,6 +439,10 @@ public class TorService {
         config.put("SafeLogging", "1");
         config.put("StrictNodes", "1");
         config.put("CookieAuthentication", "1");
+        // This managed service starts only when requested or restoring an
+        // enabled service preference. Wake persisted dormancy before waiting
+        // for bootstrap: ODM holds client downloads until Tor is ready.
+        config.put("DormantCanceledByStartup", "1");
         return config;
     }
 
@@ -513,6 +525,9 @@ public class TorService {
                 int previousProgress = bootstrapProgress.getAndAccumulate(
                         parsedProgress, Math::max);
                 int currentProgress = Math.max(previousProgress, parsedProgress);
+                if (currentProgress != previousProgress) {
+                    LOGGER.info("Tor bootstrap progress: {}%", currentProgress);
+                }
                 if (currentProgress == 100) {
                     if (bootstrapComplete.compareAndSet(false, true)) {
                         notifyListeners(TorServiceEvent.BOOTSTRAP_COMPLETE);

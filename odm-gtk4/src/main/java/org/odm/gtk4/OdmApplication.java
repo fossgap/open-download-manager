@@ -226,8 +226,10 @@ public final class OdmApplication {
             boolean torStarted = false;
             if (TorServiceController.isEnabledAtStartup(manager.getGlobalSettings())) {
                 try {
+                    // Allow the service's 45-second bootstrap deadline
+                    // and process cleanup to finish before this guard.
                     torStarted = Boolean.TRUE.equals(
-                            torService.start().get(40, TimeUnit.SECONDS));
+                            torService.start().get(60, TimeUnit.SECONDS));
                     // Keep admission closed until persisted records have been
                     // recovered and any old managed endpoint can be migrated.
                     manager.setTorServiceAvailable(false, torService.getSocksPort()).join();

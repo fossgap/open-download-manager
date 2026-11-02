@@ -118,11 +118,17 @@ class TorServiceIntegrationTest {
 
     @Test
     @Order(1)
-    @DisplayName("Should start Tor service successfully")
+    @DisplayName("Should start Tor service from persisted dormant state")
     void testTorServiceStart() throws Exception {
+        // Tor can persist dormancy after an idle session. A requested start
+        // must wake it before ODM waits for bootstrap and admits downloads.
+        Files.writeString(Path.of(testDataDirPath, "state"), "Dormant 1\n");
+
         CompletableFuture<Boolean> startResult = torService.start();
 
         assertTrue(startResult.get(60, TimeUnit.SECONDS), "Tor service should start successfully");
+        assertEquals(100, torService.getBootstrapProgress(),
+                "saved dormancy must not leave Tor waiting for client traffic");
         assertTrue(torService.isHealthy(), "Tor service should be healthy after start");
 
         // Verify SOCKS port is accessible
